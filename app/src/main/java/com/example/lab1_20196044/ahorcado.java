@@ -2,26 +2,46 @@ package com.example.lab1_20196044;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Dialog;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 public class ahorcado extends AppCompatActivity {
 
+
+    Dialog myDialog;
+
+
+
+    private boolean juegoEnCurso = false;
+
+    private ArrayList<String> estadisticas = new ArrayList<>();
+
     private String palabraActual = "";
     private TextView[] lineas;
     private ImageView[] partesCuerpo;
     private int errores = 0;
     private List<String> palabras = Arrays.asList("REDES", "PROPA", "PUCP", "TELITO", "TELECO", "BATI");
+    private int tiempo = 0; // variable para llevar el tiempo
+    private Handler handler = new Handler(); // Handler para actualizar el tiempo
+    private boolean juegoTerminado = false;
+
 
 
     @Override
@@ -29,6 +49,7 @@ public class ahorcado extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ahorcado);
         getSupportActionBar().setTitle("TeleAhorcado");
+        myDialog = new Dialog(this);
 
         final TextView resultados = findViewById(R.id.resultados);
         final ImageView head = findViewById(R.id.head);
@@ -38,7 +59,7 @@ public class ahorcado extends AppCompatActivity {
         final ImageView manoder = findViewById(R.id.manoder);
         final ImageView pieder = findViewById(R.id.pieder);
 
-        partesCuerpo = new ImageView[]{head, torso, pieizq, manoizq, manoder, pieder};
+        partesCuerpo = new ImageView[]{head, torso, manoder, manoizq, pieizq, pieder};
 
         final TextView linea1 = findViewById(R.id.linea1);
         final TextView linea2 = findViewById(R.id.linea2);
@@ -52,10 +73,30 @@ public class ahorcado extends AppCompatActivity {
         final Button nuevoJuegoBtn = findViewById(R.id.nuevojuego);
         final Random random = new Random();
 
+
         nuevoJuegoBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                if (juegoEnCurso && !juegoTerminado) {
+                    estadisticas.add("Canceló");
+
+                }
+                // Ahora, inicia un nuevo juego
+                juegoTerminado = false; // Reinicia el estado del juego
+                juegoEnCurso = true;
+
+                tiempo=0;
                 errores = 0;
+
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        tiempo++;
+                        handler.postDelayed(this, 1000);
+                    }
+                }, 1000);
+
                 habilitarBotones();
                 for (ImageView parte : partesCuerpo) {
                     parte.setVisibility(View.INVISIBLE);
@@ -72,10 +113,13 @@ public class ahorcado extends AppCompatActivity {
                     }
                 }
                 resultados.setText("");
+
+
+
             }
         });
 
-        String[] letras = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "erre", "S","T", "U", "V", "W", "X", "Y","Z"};
+        String[] letras = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "Re", "S","T", "U", "V", "W", "X", "Y","Z"};
 
         for (final String letra : letras) {
             final TextView letraView = findViewById(getResources().getIdentifier(letra, "id", getPackageName()));
@@ -88,8 +132,12 @@ public class ahorcado extends AppCompatActivity {
                     if (!palabraActual.isEmpty()) {
                         boolean acierto = false;
                         for (int i = 0; i < palabraActual.length(); i++) {
-                            if (palabraActual.charAt(i) == letra.charAt(0)) {
-                                lineas[i].setText(letra);
+                            char expectedChar = letra.charAt(0);
+                            if (letra.equals("Re")) {
+                                expectedChar = 'R';
+                            }
+                            if (palabraActual.charAt(i) == expectedChar) {
+                                lineas[i].setText(String.valueOf(expectedChar));
                                 acierto = true;
                             }
                         }
@@ -98,7 +146,11 @@ public class ahorcado extends AppCompatActivity {
                             partesCuerpo[errores].setVisibility(View.VISIBLE);
                             errores++;
                             if (errores >= partesCuerpo.length) {
+                                juegoTerminado = true;
                                 resultados.setText("Perdiste");
+                                estadisticas.add("Terminó en " + tiempo + " segundos"); // Añadir estadística
+                                handler.removeCallbacksAndMessages(null); // Detener el contador de tiempo
+
                                 deshabilitarBotones();
                             }
                         }
@@ -112,9 +164,13 @@ public class ahorcado extends AppCompatActivity {
                         }
 
                         if (haGanado) {
-                            resultados.setText("Ganaste");
+                            juegoTerminado = true;
+                            resultados.setText("Ganó | terminó en " + tiempo + " s");
+                            estadisticas.add("Terminó en " + tiempo + " segundos"); // Añadir estadística
                             deshabilitarBotones();
+                            handler.removeCallbacksAndMessages(null); // Detener el contador de tiempo
                         }
+
 
                     }
                 }
@@ -123,7 +179,7 @@ public class ahorcado extends AppCompatActivity {
     }
 
     private void habilitarBotones() {
-        String[] letras = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "erre", "S","T", "U", "V", "W", "X", "Y","Z"};
+        String[] letras = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "Re", "S","T", "U", "V", "W", "X", "Y","Z"};
         for (String letra : letras) {
             TextView letraView = findViewById(getResources().getIdentifier(letra, "id", getPackageName()));
             letraView.setEnabled(true);
@@ -132,7 +188,7 @@ public class ahorcado extends AppCompatActivity {
     }
 
     private void deshabilitarBotones() {
-        String[] letras = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "erre", "S","T", "U", "V", "W", "X", "Y","Z"};
+        String[] letras = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "Re", "S","T", "U", "V", "W", "X", "Y","Z"};
         for (String letra : letras) {
             TextView letraView = findViewById(getResources().getIdentifier(letra, "id", getPackageName()));
             letraView.setEnabled(false);
@@ -140,8 +196,32 @@ public class ahorcado extends AppCompatActivity {
     }
 
     public void statsBtn(MenuItem menuItem){
-        Toast.makeText(this, "holi", Toast.LENGTH_SHORT).show();
+        myDialog.setContentView(R.layout.popup);
+        LinearLayout listaStats = myDialog.findViewById(R.id.listadostats); // Obtener referencia al LinearLayout
+        listaStats.removeAllViews(); // Eliminar las vistas previas
+
+        // Añadir estadísticas
+        int i = 1;
+        for (String stat : estadisticas) {
+
+            TextView newStat = new TextView(this);
+            newStat.setText(i + ". " + stat);  // Añadir número al comienzo de la estadística
+            i++;  // Incrementar el número de la estadística
+
+   
+            newStat.setTextColor(Color.BLACK);
+            newStat.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT)
+            );
+
+            listaStats.addView(newStat);
+        }
+
+        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.WHITE));
+        myDialog.show();
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
