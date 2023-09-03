@@ -2,12 +2,14 @@ package com.example.lab1_20196044;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,7 +22,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mTextView = findViewById(R.id.textView4);
         registerForContextMenu(mTextView);
+        Button btnJugar = findViewById(R.id.button);
 
+        btnJugar.setOnClickListener(view -> {
+            // Crear un nuevo Intent para abrir AhorcadoActivity
+            Intent intent = new Intent(MainActivity.this, ahorcado.class);
+            startActivity(intent);
+        });
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
